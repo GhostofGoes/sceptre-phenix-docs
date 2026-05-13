@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../vms/">
+        <link rel="prev" href="../settings/">
       
       
-        <link rel="next" href="../image/">
+        <link rel="next" href="../git-workflow/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>VM Actions - phenix documentation</title>
+        <title>Logging - phenix documentation</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#vm-multi-action" class="md-skip">
+        <a href="#logging" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              VM Actions
+              Logging
             
           </span>
         </div>
@@ -288,18 +288,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,7 +322,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -391,10 +393,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../logging/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -410,6 +439,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-app-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The App Contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The App Contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#python-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Apps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#go-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go Apps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phenix-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        phēnix Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-request-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Request Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -454,20 +575,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -488,7 +607,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -559,37 +678,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    VM Actions
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../vm-multi-action/" class="md-nav__link">
         
   
   
@@ -605,171 +697,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#selecting-vms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Selecting VMs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Selecting VMs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#from-the-web-ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Web-UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#searching-for-vms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Searching for VMs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Searching for VMs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#from-the-web-ui_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Web-UI
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="From the Web-UI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#startingstopping-packet-captures" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Starting/Stopping Packet Captures
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Starting/Stopping Packet Captures">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#from-the-web-ui_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Web-UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stopped-experiment-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stopped Experiment Component
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1277,73 +1204,66 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#selecting-vms" class="md-nav__link">
+  <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Selecting VMs
+        Architecture
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Selecting VMs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#from-the-web-ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Web-UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#searching-for-vms" class="md-nav__link">
+  <a href="#the-app-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Searching for VMs
+        The App Contract
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Searching for VMs">
+    <nav class="md-nav" aria-label="The App Contract">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#from-the-web-ui_1" class="md-nav__link">
+  <a href="#python-apps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From the Web-UI
+        Python Apps
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="From the Web-UI">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+  <a href="#go-apps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Go Apps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phenix-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        phēnix Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-request-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Request Logging
       
     </span>
   </a>
@@ -1352,72 +1272,6 @@
         
       </ul>
     </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#startingstopping-packet-captures" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Starting/Stopping Packet Captures
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Starting/Stopping Packet Captures">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#from-the-web-ui_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Web-UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-the-command-line-binary_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the Command Line Binary
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stopped-experiment-component" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stopped Experiment Component
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1441,101 +1295,111 @@
   
 
 
-<h1 id="vm-multi-action">VM Multi Action<a class="headerlink" href="#vm-multi-action" title="Permanent link">&para;</a></h1>
-<h2 id="selecting-vms">Selecting VMs<a class="headerlink" href="#selecting-vms" title="Permanent link">&para;</a></h2>
-<h3 id="from-the-web-ui">From the Web-UI<a class="headerlink" href="#from-the-web-ui" title="Permanent link">&para;</a></h3>
-<p>The experiment must be started; click on the experiment name to enter the
-Running Experiment component. Within that component, click on the checkbox 
-adjacent to the <code>VM Name</code> column to select all the VMs.  Alternatively,
-the checkbox adjacent to a specific VM name can be used to select the
-VM.  Once one or more VMs are selected, a toolbar will appear to the
-left of the search text box.  The buttons on the toolbar are essentially
-the same as described in <a href="../vms/">VMs</a>.</p>
-<p><img alt="screenshot" src="../images/vms_multi_select.png" /></p>
-<h3 id="from-the-command-line-binary">From the Command Line Binary<a class="headerlink" href="#from-the-command-line-binary" title="Permanent link">&para;</a></h3>
-<p>Not applicable.</p>
-<h2 id="searching-for-vms">Searching for VMs<a class="headerlink" href="#searching-for-vms" title="Permanent link">&para;</a></h2>
-<p>The search text box can be used to filter the list of VMs to
-only apply actions to the filtered list.</p>
-<h3 id="from-the-web-ui_1">From the Web-UI<a class="headerlink" href="#from-the-web-ui_1" title="Permanent link">&para;</a></h3>
-<p>The experiment must be started; click on the experiment name to enter the
-Running Experiment component. Within that component, use the search
-textbox to find VMs by:</p>
-<ul>
-<li>
-<p>state - The keywords <code>running,shutdown,paused,capturing</code> can be used 
-  to find  VMs in a specific state.  Also, the <code>not</code> keyword can be used
-  to negate search term(s) (i.e. <code>not running</code>)</p>
-</li>
-<li>
-<p>ipv4 address - VMs in a specific subnet can be found by entering the
-  subnet (i.e <code>192.168.2.0/30</code>)</p>
-</li>
-<li>
-<p>other fields (i.e. name, taps, tags) - All other fields will be
-  searched for a keyword contained within the field</p>
-</li>
-<li>
-<p>combine search terms - Search terms can be combined by using <code>or and</code>
-  keywords.  Parenthesis can also be used to group search terms. </p>
-</li>
-<li>
-<p>escape keywords - To find keywords that appear in a VM name use double
-  quotes. For example, to find a VM named <code>free_running</code>, type <code>"running"</code>.</p>
-</li>
+<h1 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">&para;</a></h1>
+<p>phēnix features a centralized logging system that aggregates logs from the core daemon, internal Go services, and external user applications.</p>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p>The logging architecture is designed to be <strong>centralized</strong>. The phēnix core acts as the aggregator, capturing <code>stderr</code> from all running applications, parsing the output as JSON, and ingesting it into the centralized logging system.</p>
+<pre class="mermaid"><code>graph TD
+    subgraph "phēnix core"
+        Core[phēnix Daemon]
+        Plog[plog Package]
+        FileLog[File Logger]
+        ConsoleLog[Console Logger]
+        UILog[UI Logger]
+        Config[Viper Config]
+    end
+
+    subgraph "Go Apps"
+        GoApp[Go Application]
+        GoSlog[slog JSON Handler]
+    end
+
+    subgraph "Python Apps"
+        PyApp[Python Application]
+        PyLog[Python Logger]
+        PySink[phēnix Stderr Sink]
+    end
+
+    Config --&gt;|Watches config.yaml| Plog
+    Core --&gt;|Uses| Plog
+
+    Plog --&gt;|Write JSON/Text| FileLog
+    Plog --&gt;|Write Text| ConsoleLog
+    Plog --&gt;|Publish| UILog
+
+    GoApp --&gt;|Log| GoSlog
+    GoSlog --&gt;|JSON via Stderr| Core
+
+    PyApp --&gt;|Log| PyLog
+    PyLog --&gt;|Log| PySink
+    PySink --&gt;|JSON via Stderr| Core
+
+    Core --&gt;|ProcessStderrLogs| Plog</code></pre>
+<h2 id="the-app-contract">The App Contract<a class="headerlink" href="#the-app-contract" title="Permanent link">&para;</a></h2>
+<p>All applications (Go or Python) running under phēnix must adhere to the following contract to ensure their logs are correctly parsed and displayed in the UI:</p>
+<ol>
+<li><strong>Output</strong>: Logs must be written to <code>stderr</code>.</li>
+<li><strong>Format</strong>: Logs must be single-line <strong>JSON</strong> objects.</li>
+<li><strong>Required Fields</strong>:<ul>
+<li><code>level</code>: <code>DEBUG</code>, <code>INFO</code>, <code>WARN</code>, <code>ERROR</code></li>
+<li><code>msg</code>: The log message string.</li>
+<li><code>time</code>: Timestamp (RFC3339 or similar).</li>
 </ul>
-<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
-<p>Multiple search terms</p>
-<p><img alt="screenshot" src="../images/vms_multi_running_combined_terms.png" /></p>
-<h3 id="from-the-command-line-binary_1">From the Command Line Binary<a class="headerlink" href="#from-the-command-line-binary_1" title="Permanent link">&para;</a></h3>
-<p>Not applicable.</p>
-<h2 id="startingstopping-packet-captures">Starting/Stopping Packet Captures<a class="headerlink" href="#startingstopping-packet-captures" title="Permanent link">&para;</a></h2>
-<h3 id="from-the-web-ui_2">From the Web-UI<a class="headerlink" href="#from-the-web-ui_2" title="Permanent link">&para;</a></h3>
-<p>When a valid ipv4 subnet is entered, the <code>play</code> button adjacent to the IPv4 label will be enabled.
-To start capturing, press the <code>play</code> button.</p>
-<p><img alt="screenshot" src="../images/vms_multi_capture_start.png" /></p>
-<p>Once there are valid captures, the <code>stop</code> button adjacent to the play button will be enabled.
-To stop all the captures, press the <code>stop</code> button.</p>
-<p><img alt="screenshot" src="../images/vms_multi_capture_stop.png" /></p>
-<p>To stop all packet captures for all subnets, the term <code>capturing</code> can be entered in the search bar
-to find all the VMs with active packet captures.</p>
-<p><img alt="screenshot" src="../images/vms_multi_captures_stop_all.png" /></p>
-<h3 id="from-the-command-line-binary_2">From the Command Line Binary<a class="headerlink" href="#from-the-command-line-binary_2" title="Permanent link">&para;</a></h3>
-<p>To start packet captures on running VMs for a specific subnet, use the following command.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>phenix<span class="w"> </span>vm<span class="w"> </span>capture<span class="w"> </span>start-subnet<span class="w"> </span>&lt;experiment<span class="w"> </span>name&gt;<span class="w"> </span>&lt;subnet&gt;
-</span></code></pre></div>
-<p>To stop all packet captures for a specific subnet, use the following command.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>phenix<span class="w"> </span>vm<span class="w"> </span>capture<span class="w"> </span>stop-subnet<span class="w"> </span>&lt;experiment<span class="w"> </span>name&gt;<span class="w"> </span>&lt;subnet&gt;
-</span></code></pre></div>
-<p>To stop all packet captures for an experiment, use the following command.</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>phenix<span class="w"> </span>vm<span class="w"> </span>capture<span class="w"> </span>stop-all<span class="w"> </span>&lt;experiment<span class="w"> </span>name&gt;
-</span></code></pre></div>
-<h2 id="stopped-experiment-component">Stopped Experiment Component<a class="headerlink" href="#stopped-experiment-component" title="Permanent link">&para;</a></h2>
-<p>Similar to the Running Experiment component, multiple VMs can be selected
-for the Stopped Experiment component.  In addition, VMs in the Stopped
-Experiment component can be searched by:</p>
-<ul>
-<li>
-<p>state - The keyword <code>dnb</code> can be used to find all VMs with the 
-  <code>do not boot</code> flag set to <code>true</code>.  Also, the <code>not</code> keyword can be used
-  to negate search term(s) (i.e. <code>not dnb</code>)</p>
 </li>
-<li>
-<p>ipv4 address - VMs in a specific subnet can be found by entering the
-  subnet (i.e <code>192.168.2.0/30</code>)</p>
-</li>
-<li>
-<p>other fields (i.e. VM, host, disk) </p>
-</li>
-<li>
-<p>combine search terms - Search terms can be combined by using <code>or and</code>
-  keywords.  Parenthesis can also be used to group search terms. </p>
-</li>
-<li>
-<p>escape keywords - To find keywords that appear in a VM name use double
-  quotes. For example, to find a VM named <code>dnb_me</code>, type <code>"dnb"</code>.</p>
-</li>
+<li><strong>Optional Fields</strong>:<ul>
+<li><code>traceback</code>: For exceptions/panics (string).</li>
 </ul>
+</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Check out the <a href="../examples/#example-applications">Example Applications</a> for complete, runnable reference implementations in Go and Python.</p>
+</div>
+<h3 id="python-apps">Python Apps<a class="headerlink" href="#python-apps" title="Permanent link">&para;</a></h3>
+<p>Use the <code>phenix_apps.common.logger</code>. It is pre-configured to output JSON to stderr.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>For fatal errors, <strong>raise an exception</strong> (e.g., <code>ValueError</code>, <code>RuntimeError</code>) instead of calling <code>sys.exit(1)</code>. The <code>AppBase</code> class wraps execution in a try/except block and will automatically catch the exception, log the traceback as structured JSON, and exit cleanly.</p>
+</div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">phenix_apps.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_func</span><span class="p">():</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">custom_field</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting operation&quot;</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="c1"># ... code ...</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="c1"># Automatically captures traceback and formats as JSON</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Operation failed&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="go-apps">Go Apps<a class="headerlink" href="#go-apps" title="Permanent link">&para;</a></h3>
+<p>Use <code>log/slog</code> with a JSON handler.</p>
+<div class="language-go highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="s">&quot;log/slog&quot;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="s">&quot;os&quot;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nx">logger</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">slog</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">slog</span><span class="p">.</span><span class="nx">NewJSONHandler</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Stderr</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">))</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nx">slog</span><span class="p">.</span><span class="nx">SetDefault</span><span class="p">(</span><span class="nx">logger</span><span class="p">)</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nx">slog</span><span class="p">.</span><span class="nx">Info</span><span class="p">(</span><span class="s">&quot;Application started&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;app&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;my-app&quot;</span><span class="p">)</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="phenix-core">phēnix Core<a class="headerlink" href="#phenix-core" title="Permanent link">&para;</a></h3>
+<p>Use the <code>phenix/util/plog</code> package for logging within the core application.</p>
+<div class="language-go highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="s">&quot;phenix/util/plog&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kd">func</span><span class="w"> </span><span class="nx">MyFunc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="c1">// Always provide a LogType enum for UI filtering</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nx">plog</span><span class="p">.</span><span class="nx">Info</span><span class="p">(</span><span class="nx">plog</span><span class="p">.</span><span class="nx">TypeSystem</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;System initialized&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;version&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span><span class="p">)</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="http-request-logging">HTTP Request Logging<a class="headerlink" href="#http-request-logging" title="Permanent link">&para;</a></h3>
+<p>To view detailed HTTP request logs (method, path, status, duration), start the UI with the <code>--log-requests</code> flag.</p>
+<div class="admonition tip">
+<p class="admonition-title">Troubleshooting</p>
+<p>For common logging issues and solutions, please see the <a href="../troubleshooting/">Troubleshooting</a> page.</p>
+</div>
 
 
 
