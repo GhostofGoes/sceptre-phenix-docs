@@ -232,7 +232,9 @@ For scripts and integrations, create a longer-lived API token:
 1. On the `Users` tab, click the key icon (`create new user token`) next to the
    user. This needs the [`users`](roles-and-permissions.md#resource-users)
    `patch` permission for that user, which users created from the `Users` tab
-   have for themselves.
+   have for themselves. A token for another user also needs
+   [`users/tokens`](roles-and-permissions.md#resource-userstokens) `create`,
+   which only Global Admin has by default.
 2. Enter a `Description` and a `Lifetime (days)`. The lifetime is a number of
    days, such as `180`, or a Go duration, such as `4320h`.
 3. Click `Create Token`. The token and its expiration are shown once, so copy
@@ -250,10 +252,9 @@ a header can't be set, such as in a link, the token can be passed as a `token`
 query parameter instead.
 In `proxy` mode with a username header, API requests also need that header.
 
-The UI doesn't list a user's tokens; they're stored in the user's `User`
-config, under `tokens`. To revoke a token, call `GET /api/v1/logout` with it,
-or remove it from the user's config. Deleting a user revokes all of the user's
-tokens, and changing the signing key revokes every token.
+phēnix doesn't show a user's tokens, including through the configs API. To
+revoke a token, call `GET /api/v1/logout` with it. Deleting a user revokes all
+of the user's tokens, and changing the signing key revokes every token.
 
 ## Managing Users
 

@@ -101,7 +101,7 @@ the built-in roles.
 | Global Viewer     | Can see everything, use VM consoles and port forwards, and mount VM disks, but can't change experiments or users.         | E V U | E V U |        |        |       |   V    |
 | Experiment Admin  | Can see, start, and stop assigned experiments and fully control their VMs, but can't create or delete experiments.       | E V   | E V   |   V    | E V    |   V   |   V    |
 | Experiment User   | Can see assigned experiments and change, redeploy, snapshot, capture, and port-forward their VMs, but can't start, stop, or kill VMs. | E V   | E V   |   V    |   V    |   V   |   V    |
-| Experiment Viewer | Can see assigned experiments and their VMs, and use VM consoles and port forwards, but can't change experiments or VMs.   | E V   | E V   |        |        |       |        |
+| Experiment Viewer | Can see assigned experiments and their VMs, use VM consoles and port forwards, and mount VM disks, but can't change experiments or VMs. | E V   | E V   |        |        |       |   V    |
 | VM Admin          | Can see assigned experiments, and has full administrative control over VMs in assigned experiments.                       | E V   | E V   |   V    |   V    |   V   |   V    |
 | VM Viewer         | Can see VM screenshots, use VM consoles, and mount VM disks.                                                             |   V   |   V   |        |        |       |   V    |
 | Scorch Viewer     | Can see assigned experiments, their Scorch pipelines, component output, read-only Scorch terminals, and run files.       |   E   |   E   |        |        |       |        |
@@ -370,17 +370,19 @@ spec:
     verbs:
     - list
     - get
+  # Keep this before the first policy with resourceNames so assigning the role
+  # scopes it to the user's VMs.
+  - resources:
+    - "vms/mount"
+    verbs:
+    - post
+    - delete
   - resources:
     - hosts
     resourceNames:
     - "*"
     verbs:
     - list
-  - resources:
-    - "vms/mount"
-    verbs:
-    - post
-    - delete
   - resources:
     - builder
     verbs:
@@ -669,10 +671,9 @@ When writing a custom role:
   not `*`.
 * Only grant these to roles meant to administer phēnix, because each lets a
   user gain more access:
-    * `configs` `get`, `create`, or `update` on `User/*` or `Role/*`. User
-      configs hold password hashes and API tokens.
-    * `users` `create`, `users` `patch` on other users (which can create API
-      tokens for them), and `users/roles` `patch`.
+    * `configs` `create` or `update` on `User/*` or `Role/*`.
+    * `users` `create`, [`users/tokens`](#resource-userstokens) `create`, and
+      `users/roles` `patch`.
     * [`scorch/terminals`](#resource-scorchterminals) and
       [`miniconsole`](#resource-miniconsole).
 * Existing users keep their copy of a role until it is reassigned; see
@@ -707,7 +708,7 @@ named with (see [Named and unnamed checks](#how-permissions-are-checked)).
 
 | Verb | Allows | Named with |
 |------|--------|------------|
-| list | list an experiment's packet captures; the list shows only captures whose VM name (without the experiment) matches | experiment, then VM name |
+| list | list an experiment's packet captures; the list shows only captures for VMs the user can access by name | experiment, then experiment/VM |
 
 #### Resource: `experiments/files`
 
@@ -909,10 +910,12 @@ resource name of `*` does not match any config; use `*/*` for all configs or a
 kind pattern such as `Topology/*`.
 
 !!! warning
-    `configs` access to `User/*` or `Role/*` lets a user read password hashes
-    and API tokens, or create and change users and roles, and so gain more
-    access. The Builder role only covers `Topology/*`, `Scenario/*`, and
-    `Experiment/*`.
+    `configs` `create` or `update` access to `User/*` or `Role/*` lets a user
+    create and change users and roles, and so gain more access. The Builder
+    role only covers `Topology/*`, `Scenario/*`, and `Experiment/*`.
+
+The configs API never returns the password hashes and API tokens stored in
+User configs, and updating a User config through it keeps the stored ones.
 
 #### Resource: `topologies`
 
@@ -1023,13 +1026,22 @@ Docker image.
 | list   | list users; without it, the list shows only the requester (with `get`) | username |
 | get    | view a user | username |
 | create | create users, and see live updates when users are created | — |
-| patch  | change a user's name and password, and create API tokens for the user | username |
+| patch  | change a user's name and password, and create API tokens for the user if it's the requester (tokens for other users also need [`users/tokens`](#resource-userstokens)) | username |
 | delete | delete a user (users can't delete themselves) | username |
 
 Users created from the `Users` tab or API get `get` and `patch` for
 themselves, so they can change their own password and create their own API
 tokens. Users created from [`ui.users`](user-administration.md#from-configuration-uiusers)
 only get `get`.
+
+#### Resource: `users/tokens`
+
+| Verb   | Allows | Named with |
+|--------|--------|------------|
+| create | create API tokens for another user (also needs [`users`](#resource-users) `patch`) | username |
+
+A token for another user lets the holder act as that user. Of the built-in
+roles, only Global Admin has this permission.
 
 #### Resource: `users/roles`
 
@@ -1053,7 +1065,7 @@ only get `get`.
 
 | Verb | Allows | Named with |
 |------|--------|------------|
-| get  | view phēnix and minimega logs on the `Logs` tab | — |
+| get  | view phēnix and minimega logs on the `Logs` tab, and receive live log messages | — |
 
 #### Resource: `miniconsole`
 
