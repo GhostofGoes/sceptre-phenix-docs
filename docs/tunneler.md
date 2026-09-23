@@ -39,9 +39,9 @@ executable (on Linux/MacOS, `chmod +x phenix-tunneler-<os>-<arch>`).
 
 !!! note
     When authentication is enabled, the `Tunneler` tab and downloads need the
-    [`tunneler`](user-administration.md#resource-tunneler) `get` permission,
+    [`tunneler`](roles-and-permissions.md#resource-tunneler) `get` permission,
     and creating a port forward needs
-    [`vms/forwards`](user-administration.md#resource-vmsforwards) `create`
+    [`vms/forwards`](roles-and-permissions.md#resource-vmsforwards) `create`
     for the VM. The built-in Experiment Admin, Experiment User, and VM Admin
     roles have both.
 

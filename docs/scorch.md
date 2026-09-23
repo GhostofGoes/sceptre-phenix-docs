@@ -8,13 +8,13 @@ The screenshots and [configuration file](#example-configuration) in the rest of 
 
 ## Access Control
 
-When authentication is enabled, Scorch uses these [permissions](user-administration.md#resources):
+When authentication is enabled, Scorch uses these [permissions](roles-and-permissions.md#resources):
 
-- [`scorch`](user-administration.md#resource-scorch) `get` to view Scorch pipelines, component output, and read-only terminals.
+- [`scorch`](roles-and-permissions.md#resource-scorch) `get` to view Scorch pipelines, component output, and read-only terminals.
 - `scorch` `post` and `delete` to start and cancel Scorch runs.
-- [`scorch/terminals`](user-administration.md#resource-scorchterminals) `write` to type into and exit Scorch terminals.
+- [`scorch/terminals`](roles-and-permissions.md#resource-scorchterminals) `write` to type into and exit Scorch terminals.
 
-All of these also need read access to the experiment. The built-in [Scorch Viewer and Scorch Admin](user-administration.md#builder-scorch-and-tunneler-access) roles cover viewing and running Scorch.
+All of these also need read access to the experiment. The built-in [Scorch Viewer and Scorch Admin](roles-and-permissions.md#builder-scorch-and-tunneler-access) roles cover viewing and running Scorch.
 
 !!! warning
     A Scorch terminal, such as the one a [`break`](#break-component) component opens, is a shell running as the phēnix server process. Anyone who can type into it can control the phēnix server and bypass phēnix access control. That is why typing into Scorch terminals is a separate permission, which only Global Admin and Scorch Admin have by default.
@@ -62,7 +62,7 @@ The following Scorch component types are considered `core` components, in that t
 
 ### `break` Component
 
-The `break` component is comparable to a source code break point when debugging an application in that it pauses execution of the current Scorch run until a user exits the break. While the `break` component is running, users have access to a shell on the server running phēnix as the user running phēnix. The first user with the [`scorch/terminals`](user-administration.md#resource-scorchterminals) `write` permission to access the shell via the terminal modal in the UI will have read-write access. Other users, and users without that permission, will have read-only access but will get live updates as the user with read-write access uses the terminal. A run paused at a `break` component continues when a user with read-write access exits the terminal, or when a user with `scorch` `delete` cancels the run.
+The `break` component is comparable to a source code break point when debugging an application in that it pauses execution of the current Scorch run until a user exits the break. While the `break` component is running, users have access to a shell on the server running phēnix as the user running phēnix. The first user with the [`scorch/terminals`](roles-and-permissions.md#resource-scorchterminals) `write` permission to access the shell via the terminal modal in the UI will have read-write access. Other users, and users without that permission, will have read-only access but will get live updates as the user with read-write access uses the terminal. A run paused at a `break` component continues when a user with read-write access exits the terminal, or when a user with `scorch` `delete` cancels the run.
 
 It's possible to configure the `break` component in the Scorch app configuration to create a minimega tap when the component is executed. When the component is executed, the tap will be deleted. In addition to the tap, external network access can also be configured (e.g., Internet access).
 
@@ -309,7 +309,7 @@ The Scorch table, accessible as one of the tab selections within the phēnix UI,
 - Experiment name
 - Experiment status: this reports on the status of the experiment &mdash; an experiment must be running for a Scorch app to start
 - Scorch app status: this will report the running or stopped status of the Scorch app itself
-- Terminal: if the Scorch app has reached a break point, a terminal will be available &mdash; if clicked, a terminal dialog will be opened and is running on the phēnix host system (typing into it needs [`scorch/terminals`](user-administration.md#resource-scorchterminals) `write`)
+- Terminal: if the Scorch app has reached a break point, a terminal will be available &mdash; if clicked, a terminal dialog will be opened and is running on the phēnix host system (typing into it needs [`scorch/terminals`](roles-and-permissions.md#resource-scorchterminals) `write`)
 - Find an Experiment: similar to the search fields in other tables within the phēnix UI, it is possible to filter experiment names based on terms entered here
 
 ![Scorch Table](images/table.png)

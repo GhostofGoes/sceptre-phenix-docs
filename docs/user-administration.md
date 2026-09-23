@@ -1,1192 +1,291 @@
-# User Authn/Authz in phenix
+# Users and Authentication
 
-`phenix` provides three separate modes of user authentication (authn) and
-authorization (authz).
+phēnix authenticates users of its web UI and API, and uses role-based access
+control (RBAC) to decide what each user can do. This page covers the
+authentication modes, creating and managing users, signing in, and API tokens.
+What each role and permission allows is described in
+[Roles and Permissions](roles-and-permissions.md).
 
-* disabled
-* enabled
-* proxy
+## Authentication Modes
 
-## `disabled` Mode
+phēnix has three authentication modes: `disabled`, `enabled`, and `proxy`. The
+mode is set in two places, which must agree:
 
-When in `disabled` mode, no user authentication or authorization occurs. Users
-do not have to authenticate, and all actions are allowed.
+* **The web UI build**, with `VITE_AUTH` set to `disabled`, `enabled`, or
+  `proxy`. When building the Docker image, set the `PHENIX_WEB_AUTH` build
+  arg, which defaults to `disabled`. A local UI build (`npm run build` or
+  `make build`) defaults to `enabled`. The JIT image reads `PHENIX_WEB_AUTH`
+  when the container starts instead.
+* **The `phenix ui` server**, with the JWT signing key. Set it with
+  `-k/--jwt-signing-key`, the `PHENIX_UI_JWT_SIGNING_KEY` environment
+  variable, or `ui.jwt-signing-key` in the
+  [phēnix config file](settings.md#configuration-files).
 
-To use `disabled` mode, the UI should be built with `VUE_APP_AUTH=disabled` (if
-Docker is being used to build the UI, use Docker build arg
-`PHENIX_WEB_AUTH=disabled`) and the UI server should be started without the
-`-k/--jwt-signing-key` option set.
+### `disabled` Mode
 
-## `enabled` Mode
+No authentication or authorization happens. Users don't sign in, and every
+request acts as a Global Admin.
 
-When in `enabled` mode, user authentication and authorization occurs within
-phenix directly. Users have to authenticate to the phenix UI, and certain
-actions are prohibited based on the role assigned to the user.
+Build the UI with `VITE_AUTH=disabled`, and start `phenix ui` without a signing
+key in any of the three places above.
 
-To use `enabled` mode, the UI should be built with `VUE_APP_AUTH=enabled` (if
-Docker is being used to build the UI, use Docker build arg
-`PHENIX_WEB_AUTH=enabled`) and the UI server should be started with the
-`-k/--jwt-signing-key` (and optionally the `--jwt-lifetime`) option set.
+### `enabled` Mode
 
-## `proxy` Mode
+Users sign in to phēnix with a username and password, and their role decides
+what they can do.
 
-When in `proxy` mode, user authentication is expected to occur in a reverse
-proxy that sits in front of phenix but user authorization still occurs within
-phenix directly. Users authenticate to the proxy, and certain actions are
-prohibited based on the role assigned to the user.
-
-To use `proxy` mode, the UI should be built with `VUE_APP_AUTH=proxy` (if Docker
-is being used to build the UI, use Docker build arg `PHENIX_WEB_AUTH=proxy`) and
-the UI server should be started with the `-k/--jwt-signing-key` and
-`--proxy-auth-header` (and optionally the `--jwt-lifetime`) options set.
-
-In addition, the reverse proxy should add a header to requests being proxied
-that contains the username of the authenticated user, with the name of the
-header matching what `--proxy-auth-header` is set to (for example,
-`--proxy-auth-header=X-phenix-user`).
-
-If a user is able to authenticate to the proxy but is not yet a user in phenix,
-they will be added as a phenix user automatically and assigned the `Disabled`
-role that will deny all actions until an admin user can assign them a different
-role.
-
-## Create a new user
-
-There are three primary ways to create new users.
-
-1. Choose the `Create Account` link off the login page and complete all fields
-   in the `Create a New Account` dialogue. This will initiate a message to an
-   administrator's account who can then activate the account, setting the
-   role(s) and resource name(s).
-
-    ![screenshot](images/login_create.png){: width=400 .center}
-
-    ![screenshot](images/create_new_account.png){: width=400 .center}
-
-2. From the `Users` tab, click the `+` button to create a new user. Here the
-   administrator will add the [role(s) and resource
-   name(s)](#user-administration).
-
-    ![screenshot](images/create_a_new_user.png){: width=400 .center}
-
-3. Create a YAML or JSON file at `/etc/phenix/users.[yml|json]` with the
-   following structure. When the `phenix` UI starts, it looks for this file and
-   adds any users present in the file that are not already present in `phenix`.
-   For users in the file that already exist, `phenix` ensures the user role
-   matches what's in the file and updates it as necessary. This file is also
-   automatically watched, so any users added to the file while `phenix` is
-   running will automatically be added to `phenix`.
-
-```yaml
-ui:
-  users:
-    - <username>:<password>:<role name>
-    - ...
-```
-
-!!! note
-    A user must be assigned a role that exists. Creating a user with an
-    unknown role from the `Users` tab or the API returns an error, and users
-    in the users file whose role doesn't exist are skipped and logged, so
-    phēnix never stores a user without a role. Creating a user whose name is
-    already taken returns `409 Conflict`.
-
-## Login
-
-The login page is self-descriptive. Using the `Remember me` checkbox will set a
-token to local storage so that you can remove the requirement to enter a
-`Username` and `Password` each time the page or site is reloaded.
-
-If an administrator starts the UI server with the following command,
-authentication is enabled:
+Build the UI with `VITE_AUTH=enabled`, and start `phenix ui` with a secret
+signing key:
 
 ```shell
-phenix ui -k <some_string>
+phenix ui --jwt-signing-key <secret>
 ```
 
-Without the `-k` (or `--jwt-signing-key`), authentication is disabled.
+The key must not be `proxy-jwt` and must not start with `dev|`, because those
+values select other modes.
 
-## Generating User Authentication Tokens
+Signing in gives the user a session token that is valid for `--jwt-lifetime`
+(`PHENIX_UI_JWT_LIFETIME`, `ui.jwt-lifetime`), a Go duration that defaults to
+`24h`.
 
-From the `Users` tab, click the key icon next to the given user's name. A dialog
-box will pop up where you can enter in a description for the token to be created
-and an expiration date. This expiration date should be entered in Golang time
-duration. For example, `4320h` is valid and represents 4320 hours or about 6
-months. After clicking `Create Token` a token should appear with the expiration
-date.
+### `proxy` Mode
 
-This token can be used to authenticate when using the Phenix API. Specifically, you would include the following as a header in HTTP requests.
+A reverse proxy in front of phēnix authenticates users, and phēnix still
+decides what each user can do. Build the UI with `VITE_AUTH=proxy`. The server
+supports two setups:
+
+* **Username header.** Start `phenix ui` with a secret signing key and
+  `--proxy-auth-header <header>` (`PHENIX_UI_PROXY_AUTH_HEADER`), for example
+  `--proxy-auth-header X-phenix-user`. The proxy adds that header, containing
+  the authenticated username, to every request. phēnix trusts the header: the
+  UI signs the user in without a password, and every API request must carry
+  the header with the same username as its token.
+* **Proxy-issued token.** Start `phenix ui` with `--jwt-signing-key proxy-jwt`.
+  The proxy sends a JWT for the user as `X-Phenix-Auth-Token: Bearer <jwt>`,
+  and phēnix reads the username from its `sub`, `username`, or `user` claim.
+  phēnix does not verify the token's signature. A token is accepted only after
+  it has been registered by calling `GET /api/v1/login` with it, which the UI
+  does when it signs in; scripts must do the same. phēnix keeps one
+  proxy-issued token per user.
+
+!!! warning
+    In `proxy` mode, phēnix trusts the proxy completely. Make sure clients can
+    only reach phēnix through the proxy, and that the proxy removes any
+    username header or `X-Phenix-Auth-Token` header sent by the client.
+
+Each proxy user needs a phēnix user with the same username. Create them ahead
+of time, as described in [Creating Users](#creating-users); their passwords are
+not used in `proxy` mode. A user without a phēnix account is sent to a sign-up
+form, but that form sends no password and so fails the
+[password requirements](#password-requirements).
+
+In `proxy` mode, the UI header shows `Reauthorize` instead of `Logout`.
+
+## The First Administrator
+
+If no users are configured in [`ui.users`](#from-configuration-uiusers),
+`phenix ui` creates a Global Admin user named `admin@foo.com` with the password
+`foobar` when it starts.
+
+!!! warning
+    Configure your own administrator in `ui.users` before exposing phēnix. If
+    `admin@foo.com` was already created, delete it from the `Users` tab after
+    signing in as your own administrator.
+
+## Creating Users
+
+Every user has exactly one role, and a user with an unknown role is never
+created. phēnix can create users in three ways.
+
+### From the Users Tab
+
+A user with the `users` `create` permission can click the `+` button on the
+`Users` tab and fill in:
+
+* `User Name`, `First Name`, `Last Name`, `Password`, and `Confirm Password`.
+  The password must meet the [password requirements](#password-requirements).
+* `Role`: the user's role. See [Built-In Roles](roles-and-permissions.md#built-in-roles).
+* `Resource Name(s)`: optional, space-separated names that limit the role to
+  certain experiments. See
+  [Scoping a Role to Experiments](roles-and-permissions.md#scoping-a-role-to-experiments).
+
+![screenshot](images/create_a_new_user.png){: width=400 .center}
+
+The same can be done with the API: `POST /api/v1/users` with `username`,
+`password`, `first_name`, `last_name`, `role_name`, and `resource_names`.
+Creating a user with a role that doesn't exist returns an error, and creating
+a user whose name is taken returns `409 Conflict`.
+
+### From Configuration (`ui.users`)
+
+When `phenix ui` starts, it creates the users listed in the `ui.users`
+setting. Each entry has this format:
+
+```text
+<username>:<password>:<role>[:<resource name>...]
+```
+
+* `<role>` is a role's display name, such as `Experiment User`, or its config
+  name, such as `experiment-user`.
+* Any fields after the role are resource names that limit the role to certain
+  experiments, for example `alice:<password>:Experiment User:exp-a:exp-a/*`.
+  See [Scoping a Role to Experiments](roles-and-permissions.md#scoping-a-role-to-experiments).
+
+`ui.users` can be set in any of these places:
+
+* A `users` config file, such as `users.yml`, in the current directory,
+  `~/.config/phenix` (when not running as root), or `/etc/phenix`:
+
+    ```yaml
+    ui:
+      users:
+        - admin:<password>:Global Admin
+        - alice:<password>:Experiment User:exp-a:exp-a/*
+    ```
+
+* `ui.users` in the [phēnix config file](settings.md#configuration-files).
+* The `--users` flag, with entries separated by commas or given by repeating
+  the flag.
+* The `PHENIX_UI_USERS` environment variable, with entries separated by
+  spaces. Role display names contain spaces, so use config names such as
+  `global-admin` here.
+
+These sources don't combine: the `--users` flag wins over `PHENIX_UI_USERS`,
+which wins over the config files, and a `users` file overrides `ui.users` in
+the phēnix config file.
+
+phēnix reads `ui.users` only when `phenix ui` starts, so restart it after
+changing the list. For each entry:
+
+* If the user doesn't exist, phēnix creates it. Entries whose role doesn't
+  exist are skipped and logged.
+* If the user exists and its role is not the one listed, phēnix assigns the
+  listed role and resource names, which undoes role changes made on the
+  `Users` tab. The comparison uses the role's display name, so an entry that
+  uses a config name, such as `experiment-user`, reassigns the role and its
+  resource names at every start. Changing only an entry's resource names does
+  not update an existing user.
+* Passwords of existing users are never changed.
+
+Passwords in `ui.users` don't have to meet the password requirements and can't
+contain `:`. Users created this way can view their own user, but can't change
+their own password or create their own API tokens unless their role allows it.
+
+### Self Sign-Up
+
+In `enabled` mode, the sign-in page has a `Create Account` button that opens a
+`Create a New Account` dialog. It asks for a user name, first name, last name,
+and password.
+
+![screenshot](images/login_create.png){: width=400 .center}
+
+![screenshot](images/create_new_account.png){: width=400 .center}
+
+The new account gets the `Disabled` role and is signed in, but can't do
+anything until an administrator assigns it a role on the `Users` tab.
+phēnix doesn't notify administrators; the new account appears on the `Users`
+tab with the `Disabled` role after the page is refreshed. Anyone who can reach
+the sign-in page can create a `Disabled` account.
+
+### Password Requirements
+
+By default, passwords must be at least 8 characters long and contain a
+lowercase letter, a number, and a symbol. Uppercase letters are not required.
+Change these under `Settings` > `Password Settings`, which needs the
+[`settings`](roles-and-permissions.md#resource-settings) `update` permission.
+The minimum length can be set from 8 to 32.
+
+The requirements apply to users created from the `Users` tab, the API, and self
+sign-up, and to password changes. They don't apply to users created from
+`ui.users`.
+
+## Signing In
+
+Sign in on the phēnix sign-in page with a username and password.
+
+* `Remember me` keeps the session in the browser's local storage, so it
+  survives new tabs and browser restarts. Without it, the session lasts only
+  in the current tab.
+* The session ends when its token expires (`--jwt-lifetime`, `24h` by
+  default), and the UI asks the user to sign in again.
+* `Logout` in the header ends the session and revokes its token on the server.
+* phēnix can also sign out idle users; see
+  [Web UI Session Timeout](settings.md#web-ui-session-timeout).
+
+To sign in from a script, call `POST /api/v1/login` with a JSON body of
+`{"user": "<username>", "pass": "<password>"}`, or `GET /api/v1/login` with
+HTTP basic authentication. The response's `token` is valid for
+`--jwt-lifetime`:
+
+```shell
+TOKEN=$(curl -s -X POST -d '{"user":"alice","pass":"<password>"}' \
+  https://phenix.example.com/api/v1/login | jq -r .token)
+
+curl -H "X-Phenix-Auth-Token: Bearer $TOKEN" \
+  https://phenix.example.com/api/v1/experiments
+```
+
+## API Tokens
+
+For scripts and integrations, create a longer-lived API token:
+
+1. On the `Users` tab, click the key icon (`create new user token`) next to the
+   user. This needs the [`users`](roles-and-permissions.md#resource-users)
+   `patch` permission for that user, which users created from the `Users` tab
+   have for themselves.
+2. Enter a `Description` and a `Lifetime (days)`. The lifetime is a number of
+   days, such as `180`, or a Go duration, such as `4320h`.
+3. Click `Create Token`. The token and its expiration are shown once, so copy
+   the token before closing the dialog.
+
+Send the token in the `X-Phenix-Auth-Token` header, prefixed with `Bearer`:
 
 ```http
-X-phenix-auth-token: ******
+X-Phenix-Auth-Token: Bearer <token>
 ```
 
-## User Administration
-
-### Updating Users
-
-An administrator is able to click on the username on the table in the Users tab
-to update a user. They can update `First Name` or `Last Name`, `Role`,
-`Experiment Names`, and `Resource Name(s)`.
-
-### Scoping a Role to Experiments
-
-When a role is assigned to a user, the space-separated `Resource Name(s)` are
-copied into the role's policies that don't already name their resources, in
-order, stopping at the first policy that does. This is how roles such as
-Experiment User and Scorch Viewer are limited to the user's experiments.
-
-* Experiment checks use the experiment name, such as `exp-a`.
-* VM checks, including port forwards, use `<experiment>/<vm>`, so enter both
-  the experiment and a VM pattern, for example `exp-a exp-a/*`.
-* Roles whose policies all name their resources, such as Global Admin, Global
-  Viewer, and Builder, ignore these names and are not scoped to experiments.
-* Builder, Scorch, and Tunneler access (`builder`, `scorch`,
-  `scorch/terminals`, and `tunneler`) is checked without a name, so scoping
-  does not limit it. Scorch data is still limited to experiments the user can
-  read.
-
-### Roles
-
-`Global Admin` is the administrator level account and has access to all
-capabilities, to include user management. Global Admins also have access to all
-resources. The following table provides a high-level overview of all the
-available roles and their access rights.
-
-| Role              | Limits                                                                                                                   | List  |  Get  | Create | Update | Patch | Delete |
-|-------------------|:-------------------------------------------------------------------------------------------------------------------------|:-----:|:-----:|:------:|:------:|:-----:|:------:|
-| Global Admin      | Can see and control absolutely anything/everything.                                                                      | E V U | E V U | E V U  | E V U  | E V U | E V U  |
-| Global Viewer     | Can see absolutely anything/everything, but cannot make any changes.                                                     | E V U | E V U |        |        |       |        |
-| Experiment Admin  | Can see and control anything/everything for assigned experiments, including VMs, but cannot create new experiments.      | E V   | E V   |   V    | E V    |   V   |   V    |
-| Experiment User   | Can see assigned experiments, and can control VMs within assigned experiments, but cannot modify experiments themselves. | E V   | E V   |        |        |   V   |        |
-| Experiment Viewer | Can see assigned experiments and VMs within assigned experiments, but cannot modify or control experiments or VMs.       | E V   | E V   |        |        |       |        |
-| VM Admin          | Can see assigned experiments, and has full administrative control over VMs in assigned experiments.                       | E V   | E V   |   V    |   V    |   V   |   V    |
-| VM Viewer         | Can only see VM screenshots and access VM VNC, nothing else.                                                             |   V   |       |        |        |       |        |
-| Scorch Viewer     | Can see assigned experiments, their Scorch pipelines, component output, read-only Scorch terminals, and run files.       |   E   |   E   |        |        |       |        |
-| Scorch Admin      | Everything Scorch Viewer can do, plus start and cancel Scorch runs, type into Scorch terminals, and see VMs.            |  E V  |  E V  |        |        |       |        |
-| Builder           | Can design topologies and scenarios, and create and update experiments from them. Not scoped to experiments.             |  E C  |  E C  |  E C   |  E C   |       |        |
-
-Key: E - experiment resource, V - VM resource, U - user resource, C - Topology, Scenario, and Experiment configs
-
-#### Builder, Scorch, and Tunneler Access
-
-The Builder, Scorch, and Tunneler have their own permissions, described in
-[Resources](#resources). The built-in roles grant the following. Custom roles
-must add these permissions explicitly.
-
-| Role              | Builder                        | Scorch runs                  | Scorch terminals | Tunneler download | Port forwards |
-|-------------------|:-------------------------------|:-----------------------------|:----------------:|:-----------------:|:-------------:|
-| Global Admin      | open, save, create, update     | view, start, cancel          | type, exit       | yes               | yes           |
-| Global Viewer     | open, save                     | view                         |                  | yes               | view          |
-| Experiment Admin  | open, save, create, update [^1] | view, start, cancel          |                  | yes               | yes           |
-| Experiment User   | open, save, create [^1]        | view, start, cancel          |                  | yes               | yes           |
-| Experiment Viewer | open, save                     | view                         |                  | yes               | view          |
-| VM Admin          |                                | view, start, cancel          |                  | yes               | yes           |
-| VM Viewer         | open, save                     |                              |                  |                   |               |
-| Scorch Viewer     | open, save                     | view                         |                  |                   |               |
-| Scorch Admin      |                                | view, start, cancel          | type, exit       |                   |               |
-| Builder           | open, save, create, update     |                              |                  |                   |               |
-
-[^1]: Creating experiments from the Builder also needs `experiments`
-    `create`, and importing topologies from phēnix needs `configs` access.
-    These roles don't have either by default, so in practice they can open
-    the Builder and save files locally.
-
-!!! warning "Scorch terminals are shells on the phēnix server"
-    A Scorch terminal, such as the one a [`break`](scorch.md#break-component)
-    component opens, is a shell running as the phēnix server process. In a
-    typical Docker deployment, that is root in a privileged container that
-    shares the host's process namespace. Anyone who can type into a Scorch
-    terminal can control the phēnix server, and so can bypass all of phēnix's
-    access control. For this reason, typing into and exiting Scorch terminals
-    is a separate permission, [`scorch/terminals`](#resource-scorchterminals)
-    `write`, from starting and canceling Scorch runs. By default, only Global
-    Admin and Scorch Admin have it. Only assign it to users trusted with that
-    access.
-
-#### Upgrading Existing Installs
-
-The first time phēnix starts after upgrading to a release with Builder,
-Scorch, and Tunneler permissions, it keeps existing users working:
-
-* Built-in roles, and the users assigned to them, get the access in the table
-  above. Each role is updated once and then annotated with
-  `phenix.rbac/service-permissions`, so an administrator can remove this
-  access later without a restart adding it back.
-* The Builder, Scorch Viewer, and Scorch Admin roles are created once. If an
-  administrator deletes one, it is not created again.
-* Custom roles are not changed.
-
-### Resources
-
-#### Resource: `experiments`
-
-|      |      |
-|------|------|
-| Verb | list |
-| Desc | get a list of all experiments |
-| Exp. Scoped | yes (list is filtered to only include experiments in scope) |
-| Res. Scoped | no |
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get a specific experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | create a new experiment
-| Exp. Scoped | no
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | update an experiment's topology from the Builder (also see [`builder`](#resource-builder))
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | delete a specific experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-#### Resource: `experiments/start`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | start an experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-#### Resource: `experiments/stop`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | stop an experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-#### Resource: `experiments/schedule`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get current schedule for an experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | schedule an experiment using schedule algorithm
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-#### Resource: `experiments/trigger`
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | trigger the running stage of an experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | cancel triggered apps for an experiment
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-Triggering or canceling the Scorch app this way also needs
-[`scorch`](#resource-scorch) `post` or `delete`. Starting and canceling Scorch
-runs from the Scorch table does not need `experiments/trigger`.
-
-#### Resource: `experiments/captures`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of packet captures for an experiment
-| Exp. Scoped | yes (list is filtered to only include experiments in scope)
-| Res. Scoped | yes (list is filtered to only include VMs in scope)
-
-#### Resource: `experiments/files`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of files for an experiment
-| Exp. Scoped | yes (list is filtered to only include experiments in scope)
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get specific experiment file
-| Exp. Scoped | yes
-| Res. Scoped | no
-
-#### Resource: `vms`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of VMs for an experiment
-| Exp. Scoped | yes (list is filtered to only include experiments in scope)
-| Res. Scoped | yes (list is filtered to only include VMs in scope)
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | patch
-| Desc | update a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | delete a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/start`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | start a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/stop`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | stop a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/redeploy`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | redeploy a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/screenshot`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get screenshot for a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/vnc`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get VNC address for a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/captures`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of packet captures for a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | start a packet capture on a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | stop all packet captures on a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/snapshots`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of snapshots for a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | create a snapshot of a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | restore a specific experiment VM to a previous snapshot
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/commit`
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | create a new backing image from a specific experiment VM
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `applications`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of user applications
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include applications in scope)
-
-#### Resource: `topologies`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of available topologies
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include topologies in scope)
-
-#### Resource: `disks`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of available backing images
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include backing images in scope)
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | download a specific backing image
-| Exp. Scoped | no
-| Res. Scoped | yes
-
-#### Resource: `hosts`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of minimega cluster hosts
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include hosts in scope)
-
-#### Resource: `users`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of users
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include users in scope)
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get a specific user
-| Exp. Scoped | no
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | create a new user
-| Exp. Scoped | no
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | patch
-| Desc | update an existing user
-| Exp. Scoped | no
-| Res. Scoped | yes
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | delete an existing user
-| Exp. Scoped | no
-| Res. Scoped | yes
-
-#### Resource: `users/roles`
-
-|      |      |
-|------|------|
-| Verb | patch
-| Desc | update user role assignments
-| Exp. Scoped | no
-| Res. Scoped | yes
-
-#### Resource: `configs`
-
-|      |      |
-|------|------|
-| Verb | list, get, create, update, delete
-| Desc | manage store configurations (topologies, scenarios, etc.)
-| Exp. Scoped | no
-| Res. Scoped | yes (checked against `Kind/name`, such as `Topology/foo`)
-
-Config permissions are checked against the config's kind and name, such as
-`Topology/foo`. A resource name of `*` does not match any config; use `*/*`
-for all configs or a kind pattern such as `Topology/*`. Creating a config is
-checked against the new config's `Kind/name`, and renaming a config or
-changing its kind needs `create` for the new name.
-
-!!! warning
-    `configs` access to `User/*` or `Role/*` lets a user create or change
-    users and roles, and so grant themselves more access. The Builder role
-    only covers `Topology/*`, `Scenario/*`, and `Experiment/*`.
-
-#### Resource: `schemas`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | get config schemas, used to validate configs in the UI
-| Exp. Scoped | no
-| Res. Scoped | yes (by config kind)
-
-#### Resource: `scenarios`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get list of scenarios for a topology
-| Exp. Scoped | no
-| Res. Scoped | yes (list is filtered to only include scenarios in scope)
-
-#### Resource: `options`
-
-|      |      |
-|------|------|
-| Verb | list
-| Desc | get server-side defaults used when creating experiments
-| Exp. Scoped | no
-| Res. Scoped | no
-
-#### Resource: `builder`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | open the Builder, list Builder topologies, and save topology files locally
-| Exp. Scoped | no
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | post
-| Desc | create an experiment from the Builder (also needs `experiments` `create`)
-| Exp. Scoped | no
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | put
-| Desc | update an experiment from the Builder (also needs `experiments` `update` for the experiment, and `create` if it doesn't exist)
-| Exp. Scoped | no
-| Res. Scoped | no
-
-#### Resource: `scorch`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | view Scorch pipelines, component output, and read-only Scorch terminals, and receive Scorch updates
-| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | post
-| Desc | start a Scorch run
-| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
-| Res. Scoped | no
-
-|      |      |
-|------|------|
-| Verb | delete
-| Desc | cancel a Scorch run
-| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
-| Res. Scoped | no
-
-#### Resource: `scorch/terminals`
-
-|      |      |
-|------|------|
-| Verb | write
-| Desc | type into and exit Scorch terminals
-| Exp. Scoped | yes (also needs `scorch` `get` and `experiments` `get` for the experiment)
-| Res. Scoped | no
-
-!!! warning
-    A Scorch terminal is a shell on the phēnix server, so this permission
-    gives control of the phēnix server. It is separate from
-    [`scorch`](#resource-scorch) so that users can run Scorch without it. See
-    [Builder, Scorch, and Tunneler Access](#builder-scorch-and-tunneler-access).
-    A resource pattern of `scorch` does not match `scorch/terminals`, so
-    `scorch` with verb `*` does not grant it.
-
-#### Resource: `tunneler`
-
-|      |      |
-|------|------|
-| Verb | get
-| Desc | download the phēnix tunneler (also see [`vms/forwards`](#resource-vmsforwards))
-| Exp. Scoped | no
-| Res. Scoped | no
-
-#### Resource: `settings`
-
-|      |      |
-|------|------|
-| Verb | update
-| Desc | update phēnix system settings
-| Exp. Scoped | no
-| Res. Scoped | no
-
-#### Resource: `vms/mount`
-
-|      |      |
-|------|------|
-| Verb | list, get, post, patch, delete
-| Desc | manage VM filesystem mounts on headnode
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/forwards`
-
-|      |      |
-|------|------|
-| Verb | list, get, create, delete
-| Desc | manage port forwarding rules for experiment VMs, used by the [tunneler](tunneler.md)
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/cdrom`
-
-|      |      |
-|------|------|
-| Verb | update, delete
-| Desc | mount or eject CD-ROM ISO images on experiment VMs
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-#### Resource: `vms/memorySnapshot`
-
-|      |      |
-|------|------|
-| Verb | create
-| Desc | create ELF memory dumps of experiment VMs
-| Exp. Scoped | yes
-| Res. Scoped | yes
-
-### Built-In Roles
-
-The following default roles are defined in phēnix as YAML resource specifications:
-
-#### Global Admin (`global-admin`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: global-admin
-spec:
-  roleName: Global Admin
-  policies:
-  - resources:
-    - "*"
-    - "*/*"
-    resourceNames:
-    - "*"
-    - "*/*"
-    verbs:
-    - "*"
-```
-
-#### Global Viewer (`global-viewer`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: global-viewer
-spec:
-  roleName: Global Viewer
-  policies:
-  - resources:
-    - "*"
-    - "*/*"
-    resourceNames:
-    - "*"
-    - "*/*"
-    verbs:
-    - list
-    - get
-  - resources:
-    - "vms/mount"
-    resourceNames:
-    - "*"
-    - "*/*"
-    verbs:
-    - post
-    - delete
-```
-
-#### Experiment Admin (`experiment-admin`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: experiment-admin
-spec:
-  roleName: Experiment Admin
-  policies:
-  - resources:
-    - experiments
-    - "experiments/*"
-    verbs:
-    - list
-    - get
-    - update
-  - resources:
-    - vms
-    - "vms/*"
-    verbs:
-    - list
-    - get
-    - create
-    - update
-    - patch
-    - delete
-  - resources:
-    - disks
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-  - resources:
-    - "experiments/files"
-    verbs:
-    - create
-  - resources:
-    - hosts
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-  - resources:
-    - builder
-    verbs:
-    - get
-    - post
-    - put
-  # Start and cancel Scorch runs. Typing into Scorch terminals needs the
-  # separate scorch/terminals write permission, which this role does not have.
-  - resources:
-    - scorch
-    verbs:
-    - get
-    - post
-    - delete
-  - resources:
-    - tunneler
-    verbs:
-    - get
-```
-
-#### Experiment User (`experiment-user`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: experiment-user
-spec:
-  roleName: Experiment User
-  policies:
-  - resources:
-    - experiments
-    - "experiments/*"
-    verbs:
-    - list
-    - get
-  - resources:
-    - vms
-    - "vms/*"
-    verbs:
-    - list
-    - get
-    - patch
-  - resources:
-    - "vms/redeploy"
-    verbs:
-    - update
-  - resources:
-    - "vms/captures"
-    verbs:
-    - create
-    - delete
-  - resources:
-    - "vms/snapshots"
-    verbs:
-    - list
-    - create
-    - update
-  # Tunneler port forwards. Keep this before the first policy with
-  # resourceNames so assigning the role scopes it to the user's VMs.
-  - resources:
-    - "vms/forwards"
-    verbs:
-    - create
-    - delete
-  - resources:
-    - "experiments/files"
-    verbs:
-    - create
-  - resources:
-    - hosts
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-  - resources:
-    - builder
-    verbs:
-    - get
-    - post
-  # Start and cancel Scorch runs. Typing into Scorch terminals needs the
-  # separate scorch/terminals write permission, which this role does not have.
-  - resources:
-    - scorch
-    verbs:
-    - get
-    - post
-    - delete
-  - resources:
-    - tunneler
-    verbs:
-    - get
-```
-
-#### Experiment Viewer (`experiment-viewer`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: experiment-viewer
-spec:
-  roleName: Experiment Viewer
-  policies:
-  - resources:
-    - experiments
-    - "experiments/*"
-    - vms
-    - "vms/*"
-    verbs:
-    - list
-    - get
-  - resources:
-    - hosts
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-  - resources:
-    - "vms/mount"
-    verbs:
-    - post
-    - delete
-  - resources:
-    - builder
-    verbs:
-    - get
-  - resources:
-    - scorch
-    verbs:
-    - get
-  - resources:
-    - tunneler
-    verbs:
-    - get
-```
-
-#### VM Admin (`vm-admin`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: vm-admin
-spec:
-  roleName: VM Admin
-  policies:
-    - resources:
-        - experiments
-        - experiments/*
-      verbs:
-        - list
-        - get
-    - resources:
-        - vms
-        - vms/*
-      verbs:
-        - '*'
-    # Start and cancel Scorch runs. Typing into Scorch terminals needs the
-    # separate scorch/terminals write permission, which this role does not have.
-    - resources:
-        - scorch
-      verbs:
-        - get
-        - post
-        - delete
-    - resources:
-        - tunneler
-      verbs:
-        - get
-```
-
-#### VM Viewer (`vm-viewer`)
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: vm-viewer
-spec:
-  roleName: VM Viewer
-  policies:
-  - resources:
-    - vms
-    verbs:
-    - list
-  - resources:
-    - "vms/screenshot"
-    - "vms/vnc"
-    verbs:
-    - get
-  - resources:
-    - "vms/mount"
-    verbs:
-    - post
-    - list
-    - delete
-    - get
-  - resources:
-    - builder
-    verbs:
-    - get
-```
-
-#### Scorch Viewer (`scorch-viewer`)
-
-View Scorch for assigned experiments without controlling runs or typing into terminals.
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: scorch-viewer
-spec:
-  roleName: Scorch Viewer
-  # View Scorch pipelines, component output, read-only Scorch terminals, and
-  # the run files Scorch writes to the experiment files directory. Assigning
-  # the role scopes it to the user's experiments.
-  policies:
-  - resources:
-    - experiments
-    verbs:
-    - list
-    - get
-  - resources:
-    - "experiments/apps"
-    - "experiments/files"
-    verbs:
-    - list
-    - get
-  - resources:
-    - scorch
-    verbs:
-    - get
-  - resources:
-    - builder
-    verbs:
-    - get
-```
-
-#### Scorch Admin (`scorch-admin`)
-
-Run Scorch for assigned experiments, including typing into Scorch terminals. See the warning in [Builder, Scorch, and Tunneler Access](#builder-scorch-and-tunneler-access) before assigning this role.
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: scorch-admin
-spec:
-  roleName: Scorch Admin
-  # Everything Scorch Viewer can do, plus start and cancel Scorch runs, type
-  # into and exit Scorch terminals, and watch the VMs Scorch components act on.
-  # Assigning the role scopes it to the user's experiments.
-  policies:
-  - resources:
-    - experiments
-    verbs:
-    - list
-    - get
-  - resources:
-    - "experiments/apps"
-    - "experiments/files"
-    verbs:
-    - list
-    - get
-  - resources:
-    - vms
-    verbs:
-    - list
-    - get
-  - resources:
-    - "vms/screenshot"
-    verbs:
-    - get
-  - resources:
-    - scorch
-    verbs:
-    - "*"
-  # Type into and exit Scorch terminals. This is separate from scorch because a
-  # Scorch terminal, such as the one a break component opens, is a shell running
-  # as the phenix server process, usually as root in a privileged container.
-  # Anyone with this permission controls the phenix server and can bypass RBAC,
-  # so only assign this role to users trusted with that access.
-  - resources:
-    - "scorch/terminals"
-    verbs:
-    - write
-```
-
-#### Builder (`builder`)
-
-Design topologies and scenarios and create or update experiments from them. It is not scoped to experiments and cannot read or change User, Role, or Image configs.
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: builder
-spec:
-  roleName: Builder
-  # Design topologies and scenarios in the Builder or on the Configs page, and
-  # create or update experiments from them. Every policy names its resources,
-  # so, like the global roles, assigning this role does not scope it to
-  # experiments. Config access excludes User and Role configs, which would let
-  # a user grant themselves more access, and Image configs, whose build scripts
-  # administrators run as root.
-  policies:
-  - resources:
-    - builder
-    resourceNames:
-    - "*"
-    verbs:
-    - get
-    - post
-    - put
-  - resources:
-    - configs
-    resourceNames:
-    - "Topology/*"
-    - "Scenario/*"
-    - "Experiment/*"
-    verbs:
-    - list
-    - get
-    - create
-    - update
-  # create and update are what the Builder needs to create or update an
-  # experiment; they do not allow starting, stopping, or deleting experiments.
-  - resources:
-    - experiments
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-    - get
-    - create
-    - update
-  - resources:
-    - disks
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-    - get
-  - resources:
-    - topologies
-    - scenarios
-    - applications
-    - hosts
-    - options
-    resourceNames:
-    - "*"
-    verbs:
-    - list
-  - resources:
-    - schemas
-    resourceNames:
-    - "*"
-    verbs:
-    - get
-```
-
-#### Disabled (`disabled`)
-
-Denies everything. New self sign-up and proxy users get this role until an administrator assigns another.
-
-```yaml
-apiVersion: phenix.sandia.gov/v1
-kind: Role
-metadata:
-  name: disabled
-spec:
-  roleName: Disabled
-  policies: []
-```
+The header name and `Bearer` are not case-sensitive. A token without the
+`Bearer` prefix is rejected with `401 Unauthorized`. In `enabled` mode, where
+a header can't be set, such as in a link, the token can be passed as a `token`
+query parameter instead.
+In `proxy` mode with a username header, API requests also need that header.
+
+The UI doesn't list a user's tokens; they're stored in the user's `User`
+config, under `tokens`. To revoke a token, call `GET /api/v1/logout` with it,
+or remove it from the user's config. Deleting a user revokes all of the user's
+tokens, and changing the signing key revokes every token.
+
+## Managing Users
+
+### Editing Users
+
+On the `Users` tab, click a username or its pencil icon to open the
+`User <name>` dialog, which has `First Name`, `Last Name`, `Password`,
+`New Password`, `Role`, and `Resource Name(s)`.
+
+* To change a password, enter the current password in `Password` and the new
+  one in `New Password`. This is required even for administrators, so to reset
+  a forgotten password, delete and recreate the user, which also resets its
+  role and revokes its tokens.
+* Changing `Role` and `Resource Name(s)` needs the
+  [`users/roles`](roles-and-permissions.md#resource-usersroles) `patch`
+  permission for the user, in addition to `users` `patch`; without it, those
+  changes are ignored. The UI only shows these fields to users with `users`
+  `create`, and doesn't let users change their own role.
+* A user whose role changes should sign out and back in, because the UI keeps
+  the role it received at sign in.
+* Assigning a role copies the role's current policies into the user, which is
+  also how changes to a role config reach users who already have it.
+* Leaving `First Name` or `Last Name` blank keeps the current value.
+
+### Deleting Users
+
+Click the trash icon next to a user to delete it. This needs the
+[`users`](roles-and-permissions.md#resource-users) `delete` permission, and
+users can't delete themselves. Deleting a user revokes all of the user's API
+tokens.
+
+## Roles and Permissions
+
+Roles, the permissions they grant, and how to scope them to experiments are
+described in [Roles and Permissions](roles-and-permissions.md).

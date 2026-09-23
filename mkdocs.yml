@@ -96,6 +96,7 @@ nav:
     - Git Workflow: git-workflow.md
   - Administration:
     - Users: user-administration.md
+    - Roles and Permissions: roles-and-permissions.md
   - Reference:
     - minimega: minimega.md
     - Troubleshooting: troubleshooting.md

@@ -50,16 +50,18 @@ schemas.
 ## Authentication
 
 If UI/API authentication is enabled (see
-[User Authn/Authz](user-administration.md)), API requests must include an
-auth token generated from the `Users` tab in the web UI, passed as the
-`X-phenix-auth-token` header:
+[Users and Authentication](user-administration.md)), API requests must include
+a token in the `X-Phenix-Auth-Token` header, prefixed with `Bearer`:
 
 ```http
-X-phenix-auth-token: ******
+X-Phenix-Auth-Token: Bearer <token>
 ```
 
-See [Generating User Authentication Tokens](user-administration.md#generating-user-authentication-tokens)
-for details.
+Get a token by signing in with `POST /api/v1/login`, or create a longer-lived
+one from the `Users` tab. See [Signing In](user-administration.md#signing-in)
+and [API Tokens](user-administration.md#api-tokens) for details. What a token
+can do depends on the user's role; see
+[Roles and Permissions](roles-and-permissions.md).
 
 ## Integrations
 

@@ -638,7 +638,7 @@ RBAC permissions are copied from the role configuration into the user
 configuration.
 
 phēnix creates a set of default role configurations automatically, described
-[here](user-administration.md#built-in-roles). An example role
+[here](roles-and-permissions.md#built-in-roles). An example role
 configuration is shown below for completeness.
 
 ```yaml
@@ -765,11 +765,11 @@ or experiment configuration using a graphical interface. It is based on the
 `Builder` tab in the phēnix UI.
 
 Opening the Builder and saving topology files locally needs the
-[`builder`](user-administration.md#resource-builder) `get` permission, which
+[`builder`](roles-and-permissions.md#resource-builder) `get` permission, which
 every built-in viewer role has. Creating or updating experiments from the
 Builder, and importing topologies from phēnix, also need `experiments` and
 `configs` permissions; the built-in
-[Builder role](user-administration.md#builder-builder) has everything the
+[Builder role](roles-and-permissions.md#builder-builder) has everything the
 Builder uses.
 
 ### Creating or Editing a Topology
