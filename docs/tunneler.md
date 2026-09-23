@@ -37,6 +37,14 @@ executable (on Linux/MacOS, `chmod +x phenix-tunneler-<os>-<arch>`).
     `downloads/tunneler` directory must exist alongside the phēnix
     binary on the server). This will be the case if you have a typical deployment using the Docker image.
 
+!!! note
+    When authentication is enabled, the `Tunneler` tab and downloads need the
+    [`tunneler`](user-administration.md#resource-tunneler) `get` permission,
+    and creating a port forward needs
+    [`vms/forwards`](user-administration.md#resource-vmsforwards) `create`
+    for the VM. The built-in Experiment Admin, Experiment User, and VM Admin
+    roles have both.
+
 ## Starting the Tunneler Server
 
 Once downloaded, start the tunneler's local proxy server with the `serve`

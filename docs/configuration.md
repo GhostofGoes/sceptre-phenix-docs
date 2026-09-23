@@ -637,8 +637,8 @@ that user should have is specified, and using that role name the appropriate
 RBAC permissions are copied from the role configuration into the user
 configuration.
 
-There are six (6) default role configurations that get created automatically,
-and are described [here](user-administration.md#roles). An example role
+phēnix creates a set of default role configurations automatically, described
+[here](user-administration.md#built-in-roles). An example role
 configuration is shown below for completeness.
 
 ```yaml
@@ -763,6 +763,14 @@ The Builder app is an external app that allows users to generate either topology
 or experiment configuration using a graphical interface. It is based on the
 `minibuilder` app in `minimega`. Users can access the Builder app via the
 `Builder` tab in the phēnix UI.
+
+Opening the Builder and saving topology files locally needs the
+[`builder`](user-administration.md#resource-builder) `get` permission, which
+every built-in viewer role has. Creating or updating experiments from the
+Builder, and importing topologies from phēnix, also need `experiments` and
+`configs` permissions; the built-in
+[Builder role](user-administration.md#builder-builder) has everything the
+Builder uses.
 
 ### Creating or Editing a Topology
 

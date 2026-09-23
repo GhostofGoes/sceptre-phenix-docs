@@ -84,6 +84,13 @@ ui:
     - ...
 ```
 
+!!! note
+    A user must be assigned a role that exists. Creating a user with an
+    unknown role from the `Users` tab or the API returns an error, and users
+    in the users file whose role doesn't exist are skipped and logged, so
+    phēnix never stores a user without a role. Creating a user whose name is
+    already taken returns `409 Conflict`.
+
 ## Login
 
 The login page is self-descriptive. Using the `Remember me` checkbox will set a
@@ -122,6 +129,23 @@ An administrator is able to click on the username on the table in the Users tab
 to update a user. They can update `First Name` or `Last Name`, `Role`,
 `Experiment Names`, and `Resource Name(s)`.
 
+### Scoping a Role to Experiments
+
+When a role is assigned to a user, the space-separated `Resource Name(s)` are
+copied into the role's policies that don't already name their resources, in
+order, stopping at the first policy that does. This is how roles such as
+Experiment User and Scorch Viewer are limited to the user's experiments.
+
+* Experiment checks use the experiment name, such as `exp-a`.
+* VM checks, including port forwards, use `<experiment>/<vm>`, so enter both
+  the experiment and a VM pattern, for example `exp-a exp-a/*`.
+* Roles whose policies all name their resources, such as Global Admin, Global
+  Viewer, and Builder, ignore these names and are not scoped to experiments.
+* Builder, Scorch, and Tunneler access (`builder`, `scorch`,
+  `scorch/terminals`, and `tunneler`) is checked without a name, so scoping
+  does not limit it. Scorch data is still limited to experiments the user can
+  read.
+
 ### Roles
 
 `Global Admin` is the administrator level account and has access to all
@@ -138,8 +162,60 @@ available roles and their access rights.
 | Experiment Viewer | Can see assigned experiments and VMs within assigned experiments, but cannot modify or control experiments or VMs.       | E V   | E V   |        |        |       |        |
 | VM Admin          | Can see assigned experiments, and has full administrative control over VMs in assigned experiments.                       | E V   | E V   |   V    |   V    |   V   |   V    |
 | VM Viewer         | Can only see VM screenshots and access VM VNC, nothing else.                                                             |   V   |       |        |        |       |        |
+| Scorch Viewer     | Can see assigned experiments, their Scorch pipelines, component output, read-only Scorch terminals, and run files.       |   E   |   E   |        |        |       |        |
+| Scorch Admin      | Everything Scorch Viewer can do, plus start and cancel Scorch runs, type into Scorch terminals, and see VMs.            |  E V  |  E V  |        |        |       |        |
+| Builder           | Can design topologies and scenarios, and create and update experiments from them. Not scoped to experiments.             |  E C  |  E C  |  E C   |  E C   |       |        |
 
-Key: E - experiment resource, V - VM resource, U - user resource
+Key: E - experiment resource, V - VM resource, U - user resource, C - Topology, Scenario, and Experiment configs
+
+#### Builder, Scorch, and Tunneler Access
+
+The Builder, Scorch, and Tunneler have their own permissions, described in
+[Resources](#resources). The built-in roles grant the following. Custom roles
+must add these permissions explicitly.
+
+| Role              | Builder                        | Scorch runs                  | Scorch terminals | Tunneler download | Port forwards |
+|-------------------|:-------------------------------|:-----------------------------|:----------------:|:-----------------:|:-------------:|
+| Global Admin      | open, save, create, update     | view, start, cancel          | type, exit       | yes               | yes           |
+| Global Viewer     | open, save                     | view                         |                  | yes               | view          |
+| Experiment Admin  | open, save, create, update [^1] | view, start, cancel          |                  | yes               | yes           |
+| Experiment User   | open, save, create [^1]        | view, start, cancel          |                  | yes               | yes           |
+| Experiment Viewer | open, save                     | view                         |                  | yes               | view          |
+| VM Admin          |                                | view, start, cancel          |                  | yes               | yes           |
+| VM Viewer         | open, save                     |                              |                  |                   |               |
+| Scorch Viewer     | open, save                     | view                         |                  |                   |               |
+| Scorch Admin      |                                | view, start, cancel          | type, exit       |                   |               |
+| Builder           | open, save, create, update     |                              |                  |                   |               |
+
+[^1]: Creating experiments from the Builder also needs `experiments`
+    `create`, and importing topologies from phēnix needs `configs` access.
+    These roles don't have either by default, so in practice they can open
+    the Builder and save files locally.
+
+!!! warning "Scorch terminals are shells on the phēnix server"
+    A Scorch terminal, such as the one a [`break`](scorch.md#break-component)
+    component opens, is a shell running as the phēnix server process. In a
+    typical Docker deployment, that is root in a privileged container that
+    shares the host's process namespace. Anyone who can type into a Scorch
+    terminal can control the phēnix server, and so can bypass all of phēnix's
+    access control. For this reason, typing into and exiting Scorch terminals
+    is a separate permission, [`scorch/terminals`](#resource-scorchterminals)
+    `write`, from starting and canceling Scorch runs. By default, only Global
+    Admin and Scorch Admin have it. Only assign it to users trusted with that
+    access.
+
+#### Upgrading Existing Installs
+
+The first time phēnix starts after upgrading to a release with Builder,
+Scorch, and Tunneler permissions, it keeps existing users working:
+
+* Built-in roles, and the users assigned to them, get the access in the table
+  above. Each role is updated once and then annotated with
+  `phenix.rbac/service-permissions`, so an administrator can remove this
+  access later without a restart adding it back.
+* The Builder, Scorch Viewer, and Scorch Admin roles are created once. If an
+  administrator deletes one, it is not created again.
+* Custom roles are not changed.
 
 ### Resources
 
@@ -164,6 +240,13 @@ Key: E - experiment resource, V - VM resource, U - user resource
 | Verb | create
 | Desc | create a new experiment
 | Exp. Scoped | no
+| Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | update
+| Desc | update an experiment's topology from the Builder (also see [`builder`](#resource-builder))
+| Exp. Scoped | yes
 | Res. Scoped | no
 
 |      |      |
@@ -215,6 +298,17 @@ Key: E - experiment resource, V - VM resource, U - user resource
 | Desc | trigger the running stage of an experiment
 | Exp. Scoped | yes
 | Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | delete
+| Desc | cancel triggered apps for an experiment
+| Exp. Scoped | yes
+| Res. Scoped | no
+
+Triggering or canceling the Scorch app this way also needs
+[`scorch`](#resource-scorch) `post` or `delete`. Starting and canceling Scorch
+runs from the Scorch table does not need `experiments/trigger`.
 
 #### Resource: `experiments/captures`
 
@@ -398,6 +492,13 @@ Key: E - experiment resource, V - VM resource, U - user resource
 | Exp. Scoped | no
 | Res. Scoped | yes (list is filtered to only include backing images in scope)
 
+|      |      |
+|------|------|
+| Verb | get
+| Desc | download a specific backing image
+| Exp. Scoped | no
+| Res. Scoped | yes
+
 #### Resource: `hosts`
 
 |      |      |
@@ -460,7 +561,117 @@ Key: E - experiment resource, V - VM resource, U - user resource
 | Verb | list, get, create, update, delete
 | Desc | manage store configurations (topologies, scenarios, etc.)
 | Exp. Scoped | no
-| Res. Scoped | yes
+| Res. Scoped | yes (checked against `Kind/name`, such as `Topology/foo`)
+
+Config permissions are checked against the config's kind and name, such as
+`Topology/foo`. A resource name of `*` does not match any config; use `*/*`
+for all configs or a kind pattern such as `Topology/*`. Creating a config is
+checked against the new config's `Kind/name`, and renaming a config or
+changing its kind needs `create` for the new name.
+
+!!! warning
+    `configs` access to `User/*` or `Role/*` lets a user create or change
+    users and roles, and so grant themselves more access. The Builder role
+    only covers `Topology/*`, `Scenario/*`, and `Experiment/*`.
+
+#### Resource: `schemas`
+
+|      |      |
+|------|------|
+| Verb | get
+| Desc | get config schemas, used to validate configs in the UI
+| Exp. Scoped | no
+| Res. Scoped | yes (by config kind)
+
+#### Resource: `scenarios`
+
+|      |      |
+|------|------|
+| Verb | list
+| Desc | get list of scenarios for a topology
+| Exp. Scoped | no
+| Res. Scoped | yes (list is filtered to only include scenarios in scope)
+
+#### Resource: `options`
+
+|      |      |
+|------|------|
+| Verb | list
+| Desc | get server-side defaults used when creating experiments
+| Exp. Scoped | no
+| Res. Scoped | no
+
+#### Resource: `builder`
+
+|      |      |
+|------|------|
+| Verb | get
+| Desc | open the Builder, list Builder topologies, and save topology files locally
+| Exp. Scoped | no
+| Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | post
+| Desc | create an experiment from the Builder (also needs `experiments` `create`)
+| Exp. Scoped | no
+| Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | put
+| Desc | update an experiment from the Builder (also needs `experiments` `update` for the experiment, and `create` if it doesn't exist)
+| Exp. Scoped | no
+| Res. Scoped | no
+
+#### Resource: `scorch`
+
+|      |      |
+|------|------|
+| Verb | get
+| Desc | view Scorch pipelines, component output, and read-only Scorch terminals, and receive Scorch updates
+| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
+| Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | post
+| Desc | start a Scorch run
+| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
+| Res. Scoped | no
+
+|      |      |
+|------|------|
+| Verb | delete
+| Desc | cancel a Scorch run
+| Exp. Scoped | yes (also needs `experiments` `get` for the experiment)
+| Res. Scoped | no
+
+#### Resource: `scorch/terminals`
+
+|      |      |
+|------|------|
+| Verb | write
+| Desc | type into and exit Scorch terminals
+| Exp. Scoped | yes (also needs `scorch` `get` and `experiments` `get` for the experiment)
+| Res. Scoped | no
+
+!!! warning
+    A Scorch terminal is a shell on the phēnix server, so this permission
+    gives control of the phēnix server. It is separate from
+    [`scorch`](#resource-scorch) so that users can run Scorch without it. See
+    [Builder, Scorch, and Tunneler Access](#builder-scorch-and-tunneler-access).
+    A resource pattern of `scorch` does not match `scorch/terminals`, so
+    `scorch` with verb `*` does not grant it.
+
+#### Resource: `tunneler`
+
+|      |      |
+|------|------|
+| Verb | get
+| Desc | download the phēnix tunneler (also see [`vms/forwards`](#resource-vmsforwards))
+| Exp. Scoped | no
+| Res. Scoped | no
 
 #### Resource: `settings`
 
@@ -485,7 +696,7 @@ Key: E - experiment resource, V - VM resource, U - user resource
 |      |      |
 |------|------|
 | Verb | list, get, create, delete
-| Desc | manage port forwarding rules for experiment VMs
+| Desc | manage port forwarding rules for experiment VMs, used by the [tunneler](tunneler.md)
 | Exp. Scoped | yes
 | Res. Scoped | yes
 
@@ -603,6 +814,24 @@ spec:
     - "*"
     verbs:
     - list
+  - resources:
+    - builder
+    verbs:
+    - get
+    - post
+    - put
+  # Start and cancel Scorch runs. Typing into Scorch terminals needs the
+  # separate scorch/terminals write permission, which this role does not have.
+  - resources:
+    - scorch
+    verbs:
+    - get
+    - post
+    - delete
+  - resources:
+    - tunneler
+    verbs:
+    - get
 ```
 
 #### Experiment User (`experiment-user`)
@@ -643,6 +872,13 @@ spec:
     - list
     - create
     - update
+  # Tunneler port forwards. Keep this before the first policy with
+  # resourceNames so assigning the role scopes it to the user's VMs.
+  - resources:
+    - "vms/forwards"
+    verbs:
+    - create
+    - delete
   - resources:
     - "experiments/files"
     verbs:
@@ -653,6 +889,23 @@ spec:
     - "*"
     verbs:
     - list
+  - resources:
+    - builder
+    verbs:
+    - get
+    - post
+  # Start and cancel Scorch runs. Typing into Scorch terminals needs the
+  # separate scorch/terminals write permission, which this role does not have.
+  - resources:
+    - scorch
+    verbs:
+    - get
+    - post
+    - delete
+  - resources:
+    - tunneler
+    verbs:
+    - get
 ```
 
 #### Experiment Viewer (`experiment-viewer`)
@@ -684,6 +937,18 @@ spec:
     verbs:
     - post
     - delete
+  - resources:
+    - builder
+    verbs:
+    - get
+  - resources:
+    - scorch
+    verbs:
+    - get
+  - resources:
+    - tunneler
+    verbs:
+    - get
 ```
 
 #### VM Admin (`vm-admin`)
@@ -696,17 +961,29 @@ metadata:
 spec:
   roleName: VM Admin
   policies:
-  - resources:
-    - experiments
-    - "experiments/*"
-    verbs:
-    - list
-    - get
-  - resources:
-    - vms
-    - "vms/*"
-    verbs:
-    - "*"
+    - resources:
+        - experiments
+        - experiments/*
+      verbs:
+        - list
+        - get
+    - resources:
+        - vms
+        - vms/*
+      verbs:
+        - '*'
+    # Start and cancel Scorch runs. Typing into Scorch terminals needs the
+    # separate scorch/terminals write permission, which this role does not have.
+    - resources:
+        - scorch
+      verbs:
+        - get
+        - post
+        - delete
+    - resources:
+        - tunneler
+      verbs:
+        - get
 ```
 
 #### VM Viewer (`vm-viewer`)
@@ -735,4 +1012,181 @@ spec:
     - list
     - delete
     - get
+  - resources:
+    - builder
+    verbs:
+    - get
+```
+
+#### Scorch Viewer (`scorch-viewer`)
+
+View Scorch for assigned experiments without controlling runs or typing into terminals.
+
+```yaml
+apiVersion: phenix.sandia.gov/v1
+kind: Role
+metadata:
+  name: scorch-viewer
+spec:
+  roleName: Scorch Viewer
+  # View Scorch pipelines, component output, read-only Scorch terminals, and
+  # the run files Scorch writes to the experiment files directory. Assigning
+  # the role scopes it to the user's experiments.
+  policies:
+  - resources:
+    - experiments
+    verbs:
+    - list
+    - get
+  - resources:
+    - "experiments/apps"
+    - "experiments/files"
+    verbs:
+    - list
+    - get
+  - resources:
+    - scorch
+    verbs:
+    - get
+  - resources:
+    - builder
+    verbs:
+    - get
+```
+
+#### Scorch Admin (`scorch-admin`)
+
+Run Scorch for assigned experiments, including typing into Scorch terminals. See the warning in [Builder, Scorch, and Tunneler Access](#builder-scorch-and-tunneler-access) before assigning this role.
+
+```yaml
+apiVersion: phenix.sandia.gov/v1
+kind: Role
+metadata:
+  name: scorch-admin
+spec:
+  roleName: Scorch Admin
+  # Everything Scorch Viewer can do, plus start and cancel Scorch runs, type
+  # into and exit Scorch terminals, and watch the VMs Scorch components act on.
+  # Assigning the role scopes it to the user's experiments.
+  policies:
+  - resources:
+    - experiments
+    verbs:
+    - list
+    - get
+  - resources:
+    - "experiments/apps"
+    - "experiments/files"
+    verbs:
+    - list
+    - get
+  - resources:
+    - vms
+    verbs:
+    - list
+    - get
+  - resources:
+    - "vms/screenshot"
+    verbs:
+    - get
+  - resources:
+    - scorch
+    verbs:
+    - "*"
+  # Type into and exit Scorch terminals. This is separate from scorch because a
+  # Scorch terminal, such as the one a break component opens, is a shell running
+  # as the phenix server process, usually as root in a privileged container.
+  # Anyone with this permission controls the phenix server and can bypass RBAC,
+  # so only assign this role to users trusted with that access.
+  - resources:
+    - "scorch/terminals"
+    verbs:
+    - write
+```
+
+#### Builder (`builder`)
+
+Design topologies and scenarios and create or update experiments from them. It is not scoped to experiments and cannot read or change User, Role, or Image configs.
+
+```yaml
+apiVersion: phenix.sandia.gov/v1
+kind: Role
+metadata:
+  name: builder
+spec:
+  roleName: Builder
+  # Design topologies and scenarios in the Builder or on the Configs page, and
+  # create or update experiments from them. Every policy names its resources,
+  # so, like the global roles, assigning this role does not scope it to
+  # experiments. Config access excludes User and Role configs, which would let
+  # a user grant themselves more access, and Image configs, whose build scripts
+  # administrators run as root.
+  policies:
+  - resources:
+    - builder
+    resourceNames:
+    - "*"
+    verbs:
+    - get
+    - post
+    - put
+  - resources:
+    - configs
+    resourceNames:
+    - "Topology/*"
+    - "Scenario/*"
+    - "Experiment/*"
+    verbs:
+    - list
+    - get
+    - create
+    - update
+  # create and update are what the Builder needs to create or update an
+  # experiment; they do not allow starting, stopping, or deleting experiments.
+  - resources:
+    - experiments
+    resourceNames:
+    - "*"
+    verbs:
+    - list
+    - get
+    - create
+    - update
+  - resources:
+    - disks
+    resourceNames:
+    - "*"
+    verbs:
+    - list
+    - get
+  - resources:
+    - topologies
+    - scenarios
+    - applications
+    - hosts
+    - options
+    resourceNames:
+    - "*"
+    verbs:
+    - list
+  - resources:
+    - schemas
+    resourceNames:
+    - "*"
+    verbs:
+    - get
+```
+
+#### Disabled (`disabled`)
+
+Denies everything. New self sign-up and proxy users get this role until an administrator assigns another.
+
+```yaml
+apiVersion: phenix.sandia.gov/v1
+kind: Role
+metadata:
+  name: disabled
+spec:
+  roleName: Disabled
+  policies: []
 ```
