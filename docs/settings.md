@@ -115,7 +115,30 @@ The following global flags are supported by all `phenix` subcommands:
 | `ui.logs.minimega-path` | `PHENIX_UI_LOGS_MINIMEGA_PATH` | `""` | Path to the minimega log file to display in the UI. **(Restart Required)** |
 | `ui.features` | `PHENIX_UI_FEATURES` | `""` | Comma-separated list of optional UI features to enable. Currently supports `vm-mount`, which enables transferring files to and from a running VM. See [Mount a VM](vms.md#mount-a-vm). **(Restart Required)** |
 | `ui.file-server-endpoint` | `PHENIX_UI_FILE_SERVER_ENDPOINT` | `0` (disabled) | Address (`port` or `host:port`) for the separate experiment file-upload server. A port-only value binds to `127.0.0.1`. Also works with the `vm-mount` feature - see [Uploading Experiment Files from the phēnix Server](vms.md#uploading-experiment-files-from-the-phenix-server). **(Restart Required)** |
+| `ui.default-theme` | `PHENIX_UI_DEFAULT_THEME` | `system` | Default colour theme for the web UI: `system` (follow the browser's operating-system preference), `light`, or `dark`. A theme chosen with the header toggle in a browser takes precedence for that browser. Can also be set for one process with `phenix ui --default-theme`, which locks the value. See [Web UI Theme](#web-ui-theme). |
 | `mount-dir` | `PHENIX_MOUNT_DIR` | `<base-dir.phenix>/mounts` | Base directory used for VM filesystem mounts created via `phenix vm mount`. See [Mount a VM](vms.md#mount-a-vm). |
+
+## Web UI Theme
+
+The web UI has a light and a dark theme. Every browser picks its own theme with the
+sun/moon toggle in the header; the choice is stored in that browser's local storage
+(`phenix.theme`) and wins over the server default.
+
+Without a browser choice, the server's `ui.default-theme` applies. `system` (the
+default) follows the operating-system colour preference, including live changes.
+Set it with any of:
+
+```bash
+phenix settings set ui.default-theme dark   # persisted in config.yaml, hot-reloaded
+PHENIX_UI_DEFAULT_THEME=dark phenix ui      # environment variable
+phenix ui --default-theme dark              # this process only
+```
+
+The **Settings** page (admin-only) also exposes the default under *Appearance
+Settings* and writes it to `config.yaml`. When `phenix ui --default-theme` was given
+the flag wins, the control is disabled, and `PUT /api/v1/settings/theme` answers
+`409 Conflict`. Scripts can read or change the default with
+`GET`/`PUT /api/v1/settings/theme` (`{"default_theme": "system|light|dark", "locked": bool}`).
 
 ## Web UI Session Timeout
 
