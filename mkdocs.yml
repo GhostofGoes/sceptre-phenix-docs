@@ -90,6 +90,7 @@ nav:
   - Networking:
     - Bridge Mode: bridge-mode.md
     - Netflow: netflow.md
+    - WebShark: webshark.md
     - Tunneler: tunneler.md
   - Integrations:
     - API: api.md

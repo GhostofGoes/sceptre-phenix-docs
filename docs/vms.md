@@ -244,6 +244,9 @@ To stop all packet captures on a running VM, use the following command.
 phenix vm capture stop <experiment name> <vm name>
 ```
 
+To view a capture's packets in the browser, or stream a running capture into a
+local Wireshark (`phenix vm capture stream`), see [WebShark](webshark.md).
+
 ## Kill a VM
 
 ### From the Web-UI
