@@ -58,7 +58,7 @@ phenix mm --attach
 phenix mm --attach --namespace my-experiment
 ```
 
-To exit the attached console session, type `exit` or press `Ctrl+D`.
+To exit the attached console session, type `disconnect` or press `Ctrl+D`. Typing `quit` stops the minimega daemon itself.
 
 ### From the Web-UI
 
