@@ -36,6 +36,21 @@ WebShark tab or buttons.
     script copies the license and a `NOTICE` naming the source repository and
     commit into the build.
 
+### Behind a Reverse Proxy
+
+When a reverse proxy serves the phēnix UI under a base path, such as
+`https://example.com/phenix/`, WebShark is served under the same base path
+(`/phenix/webshark/`), and the proxy needs no route of its own for it.
+WebShark's build hardcodes `/webshark/`, so the phēnix server rewrites it under
+the base path in the WebShark pages, scripts, and styles it serves. For that,
+start the server with the base path the UI was built with (the
+`PHENIX_BASE_PATH` Docker build argument): `phenix ui --base-path /phenix/`.
+
+The base path can use only letters, digits, `-`, `.`, `_`, `~`, `%`, and `/`.
+With any other character, the server logs a warning and WebShark works only at
+`/webshark/` from the root of the phēnix server, which the proxy must then also
+forward to it.
+
 ## Viewing Captures
 
 Click the `WebShark` tab in the banner near the top of the phēnix UI, pick an
@@ -55,8 +70,10 @@ in a tab of its own.
 
 The UI also links to the WebShark tab from:
 
-* the `Files` tab of an experiment, where each capture file has an
-  `Open in WebShark` button
+* the `Files` tab of an experiment, where clicking a capture file's name opens
+  it in WebShark, as does the `Open in WebShark` button (a shark fin) first in
+  its `Actions` column; text files have a `View` button there instead, which
+  opens them like clicking their name
 * the Network section of a running VM's details, where each interface with a
   running capture has an `Open in WebShark` button
 
@@ -114,9 +131,6 @@ answer `404` when the VM's interface has no running capture.
 
 ## Limitations
 
-* WebShark is served at `/webshark/` from the root of the phēnix server. When
-  phēnix runs behind a reverse proxy under a base path, the proxy must also
-  forward `/webshark/` to the phēnix server.
 * WebShark loads a whole capture into the browser and parses it there, so large
   captures (hundreds of megabytes) are slow to open, and a live capture is
   downloaded again each time WebShark reloads it. For large captures, stream

@@ -10,10 +10,10 @@ available for streaming over WebSockets for experiments. The only requirement
 for enabling netflow for an experiment is that the experiment be configured to
 use a bridge name that is not the default `phenix` bridge. This can be done
 automatically for all experiments by enabling [auto bridge mode](bridge-mode.md),
-or per-experiment via the UI by expanding the `Options` section when creating a
-new experiment and providing the `Default Bridge Name` setting.
+or per-experiment via the UI by expanding the `Advanced Options` section when
+creating a new experiment and providing the `Default Bridge Name` setting.
 
-![screenshot](images/create_exp_options.png){: width=250 .center}
+![screenshot](images/create_exp_options.png){: width=400 .center}
 
 !!! note
     The `Default Bridge Name` field is only shown when the server is running in

@@ -88,11 +88,29 @@ Use "phenix experiment [command] --help" for more information about a command.
 
 Click the `+` button to the right of the filter field.
 
-![screenshot](images/create_exp_dia.png){: width=400 .center}
+![screenshot](images/create_exp_dia.png){: width=600 .center}
 
 Enter `Experiment Name` and `Experiment Topology`, the remaining selection are
 optional. In this example, `bennu` is an example topology and is not included
 by default. You will need to [create](configuration.md) your own topology(ies).
+
+Each field's label is followed by a help icon: hover over or focus it to see
+what the field does. The book button in the card's header opens this section of
+the documentation.
+
+Expand `Advanced Options` for the remaining settings:
+
+* `Deployment Mode`: which cluster hosts run the experiment's VMs
+  (`no-headnode`, `only-headnode`, or `all`), which defaults to the server's
+  `--deploy-mode` setting.
+* `Default Bridge Name`: see [Bridge Mode](bridge-mode.md).
+* `VLAN Range`: the VLAN IDs minimega may give the experiment's VLANs.
+* `Git Workflow Branch Name`: links the experiment to a
+  [Git workflow](git-workflow.md) branch.
+* `Annotations for Every VM` and `Experiment Annotations`: see
+  [Adding Annotations](#adding-annotations).
+
+![screenshot](images/create_exp_options.png){: width=500 .center}
 
 #### Purely via the Web-UI (Uploading Topo/Scenario Files)
 
@@ -110,7 +128,7 @@ You can create an experiment entirely through the Web-UI using custom topology a
    * Enter an **Experiment Name**.
    * Select your uploaded topology from the **Experiment Topology** dropdown.
    * (Optional) Select your uploaded scenario from the **Experiment Scenario** dropdown.
-   * Click **Save** to create the experiment.
+   * Click **Create Experiment** to create the experiment.
 
 ### From the Command Line Binary
 
@@ -127,6 +145,9 @@ phenix experiment create <experiment name> -t /path/to/topology.yaml -s /path/to
 
 # Specifying a base directory and disabled apps
 phenix experiment create <experiment name> -t /path/to/topology.yaml -s /path/to/scenario.yaml -d </path/to/dir/> --disabled-apps "app1,app2"
+
+# Adding annotations to every VM and to the experiment (see Adding Annotations below)
+phenix experiment create <experiment name> -t <topology name> --node-annotation phenix/startup-via-cc=true --annotation phenix.workflow/tags=team=red
 ```
 
 The `phenix exp create --help` command will output:
@@ -148,16 +169,84 @@ Examples:
   phenix experiment create <experiment name> -t <topology name or /path/to/filename> -s <scenario name or /path/to/filename>
   phenix experiment create <experiment name> -t <topology name or /path/to/filename> -s <scenario name or /path/to/filename> -d </path/to/dir/>
   phenix experiment create <experiment name> -t <topology name or /path/to/filename> -s <scenario name or /path/to/filename> --disabled-apps "app1,app2"
+  phenix experiment create <experiment name> -t <topology name> --node-annotation phenix/default-apps=false --annotation phenix.workflow/tags=nightly
 
 Flags:
-  -d, --base-dir string         Base directory to use for experiment (optional)
-  -b, --default-bridge string   Default bridge name to use for experiment (optional) (default "phenix")
-      --disabled-apps strings   Comma separated ist of apps to disable
-  -h, --help                    help for create
-  -s, --scenario string         Name of an existing scenario to use (optional)
-  -t, --topology string         Name of an existing topology to use
-      --vlan-max int            VLAN pool maximum
-      --vlan-min int            VLAN pool minimum
+      --annotation stringArray        Experiment annotation as key=value; may be repeated
+  -d, --base-dir string               Base directory to use for experiment (optional)
+  -b, --default-bridge string         Default bridge name to use for experiment (optional) (default "phenix")
+      --disabled-apps strings         Comma separated ist of apps to disable
+  -h, --help                          help for create
+      --node-annotation stringArray   Annotation for every VM as key=value; true, false and JSON lists or objects keep their type; may be repeated
+  -s, --scenario string               Name of an existing scenario to use (optional)
+  -t, --topology string               Name of an existing topology to use
+      --vlan-max int                  VLAN pool maximum
+      --vlan-min int                  VLAN pool minimum
+```
+
+### Adding Annotations
+
+An experiment can be given annotations when it is created, without editing its
+topology or scenario:
+
+| Annotations | Web-UI (`Advanced Options`) | Command line (repeatable) | API (`POST /experiments`) |
+| :--- | :--- | :--- | :--- |
+| On every VM | `Annotations for Every VM` | `--node-annotation key=value` | `node_annotations` |
+| On the experiment | `Experiment Annotations` | `--annotation key=value` | `annotations` |
+
+**Annotations for every VM** are node annotations, which apps read from the
+topology's nodes, such as
+[`phenix/default-apps`](apps.md#disable-default-apps-for-a-vm) and
+[`phenix/startup-via-cc`](apps.md#c2-startup-script-delivery). phēnix adds them
+to every VM in the experiment's own copy of the topology, so the topology config
+itself is unchanged. A VM that already has an annotation keeps its own value,
+and [external nodes](configuration.md#external-nodes) are skipped.
+
+**Experiment annotations** are added to the experiment's metadata annotations,
+where apps can read them; for example, SCORCH records the `key=value` pairs of
+`phenix.workflow/tags` in the info file it writes for each run. phēnix sets the
+`topology` and `scenario` annotations itself and rejects them. In the Web-UI, the
+`phenix.workflow/branch` annotation comes from the `Git Workflow Branch Name`
+field, and an API request cannot give it both as an annotation and as
+`workflow_branch`.
+
+In the Web-UI, the `Add annotation` button under each list offers the
+annotations phēnix's own apps read, each with a value input suited to it and a
+description, or a `Custom annotation` with any key and value. On the command
+line, and for a custom annotation in the Web-UI, a VM annotation's value `true`
+or `false` becomes a boolean and a JSON list or object keeps that type; anything
+else, numbers included, stays a string. Experiment annotations are always
+strings. The API takes `node_annotations` as JSON values, keeping their types.
+
+![screenshot](images/create_exp_annotations.png){: width=600 .center}
+
+A value of the wrong type for an annotation the default apps read is rejected,
+naming the annotation: `phenix/default-apps` must be `true` or `false`,
+`phenix/startup-autotunnel` a list of port forwards, and `vrouter/vyos-password`
+and `vrouter/enable-ssh` strings.
+
+```bash
+# For every VM, deliver startup scripts over C2 and create a port forward from 8080 to its port 80
+phenix experiment create my-experiment -t my-topology \
+  --node-annotation phenix/startup-via-cc=true \
+  --node-annotation 'phenix/startup-autotunnel=["8080:80"]' \
+  --annotation phenix.workflow/tags=team=red
+```
+
+The same request through the API:
+
+```json
+{
+  "name": "my-experiment",
+  "topology": "my-topology",
+  "node_annotations": {
+    "phenix/startup-via-cc": true,
+    "phenix/startup-autotunnel": ["8080:80"]
+  },
+  "annotations": {
+    "phenix.workflow/tags": "team=red"
+  }
+}
 ```
 
 ## Deleting Experiments

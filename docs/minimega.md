@@ -60,6 +60,28 @@ phenix mm --attach --namespace my-experiment
 
 To exit the attached console session, type `exit` or press `Ctrl+D`.
 
+### From the Web-UI
+
+When the phēnix server is started with `phenix ui --minimega-console` (or
+`PHENIX_UI_MINIMEGA_CONSOLE=true`), the `Console` tab in the banner near the top
+of the UI opens a minimega console, running `phenix mm --attach`, in the
+browser. The tab is shown to roles with `post` on `miniconsole`; without
+`--minimega-console`, it says that console access is not configured.
+
+The console belongs to the user who started it; no other user can see, use, or
+end it. It keeps running while you use other pages, reload the page, or open
+phēnix in another tab of the same browser: coming back to the `Console` tab
+shows the same console and its earlier output instead of starting a new one.
+The console ends when:
+
+* you press `Ctrl+D` or type `disconnect` in it
+* you log out
+* 15 seconds pass after the last tab that has it open closes
+
+Once it has ended, `Start a new console` starts another one. If the connection
+to it is lost, `Reconnect` attaches to it again, or starts a new one if it has
+ended in the meantime.
+
 ## minimega Command and Control (`miniccc`)
 
 phēnix and its applications rely on minimega's command and control infrastructure ([miniccc](https://sandia-minimega.github.io/minimega/reference/minimega/)) running inside experiment VMs to execute commands, transfer files, and monitor VM health.
